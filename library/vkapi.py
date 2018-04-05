@@ -260,12 +260,12 @@ class PasswordLogin(RequestProcessor):
 		#	body, response = post
 		#	if response and not body.split("<!>")[4] == "4":
 		#		raise AuthError("Incorrect number")
-		url = "https://oauth.vk.com/token?client_id="+APP_ID+"&client_secret="+APP_SECRET+"&username="+self.number+"&password="+self.password+"&scope=1031647&v=5.74&2fa=0"
+		url = "https://oauth.vk.com/token?client_id="+self.APP_ID+"&client_secret="+self.APP_SECRET+"&username="+self.number+"&password="+self.password+"&scope=1031647&v=5.74&2fa=0"
 		body, response = self.get(url)
 		reply = json.JSONDecoder(body)
-		if reply.error 
+		if reply.error:
 			raise AuthError("Unknown error")
-		if reply.access_token
+		if reply.access_token:
 			self.access_token = reply.access_token 
 			return reply.access_token
 		return self
@@ -274,33 +274,12 @@ class PasswordLogin(RequestProcessor):
 		"""
 		Confirms the application and receives the token
 		"""
-		if self.access_token 
+		if self.access_token: 
 			return self.access_token
-		
-		url = "https://oauth.vk.com/authorize/"
-		values = {"display": "mobile", "scope": SCOPE,
-			"client_id": APP_ID, "response_type": "token",
-			"redirect_uri": "https://oauth.vk.com/blank.html"}
-
-		token = None
-		body, response = self.get(url, values)
-		if response:
-			if "access_token" in response.url:
-				match = token_exp.search(response.url)
-				if match:
-					token = match.group(0)
-				else:
-					logger.error("token regexp doesn't match the url: %s", response.url)
-					raise AuthError("Something went wrong. We're so sorry.")
-			else:
-				postTarget = webtools.getTagArg("form method=\"post\"", "action",
-					body, "form")
-				if postTarget:
-					body, response = self.post(postTarget)
-					token = token_exp.search(response.url).group(0)
-				else:
-					raise AuthError("Couldn't confirm the application!")
-		return token
+		else:
+			self.login(self)
+			return self.access_token
+		return null
 
 
 class APIBinding(RequestProcessor):
