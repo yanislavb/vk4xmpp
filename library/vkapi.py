@@ -1,5 +1,6 @@
 # coding: utf-8
 # © simpleApps, 2013 — 2016.
+# (C) yanislavb, 2018.
 
 """
 Manages VK API requests
@@ -24,6 +25,7 @@ import json
 import webtools
 from printer import *
 
+access_token = ""
 SOCKET_TIMEOUT = 20
 REQUEST_RETRIES = 3
 # Для прямой авторизации (юзать осторожно, горячо!)
