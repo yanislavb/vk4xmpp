@@ -20,14 +20,17 @@ import time
 import threading
 import urllib
 import urllib2
+import json
 import webtools
 from printer import *
 
 SOCKET_TIMEOUT = 20
 REQUEST_RETRIES = 3
-
-# VK APP ID
-APP_ID = 3789129
+# Для прямой авторизации (юзать осторожно, горячо!)
+APP_ID = 2274003
+APP_SECRET = "hHbZxrka2uZ6jB1inYsH"
+# Для обратной совместимости с приложениями на OAuth
+APP_ID_OAUTH = 3789129
 # VK APP scope
 SCOPE = 69638
 
@@ -228,39 +231,50 @@ class PasswordLogin(RequestProcessor):
 		"""
 		Logging in using password
 		"""
-		url = "https://login.vk.com/"
-		values = {"act": "login", "email": self.number,	"pass": self.password}
+		# url = "https://login../"
+		# values = {"act": "login", "email": self.number,	"pass": self.password}
 
-		body, response = self.post(url, values)
+		#body, response = self.post(url, values)
 
-		if "sid=" in response.url:
-			logger.error("vkapi: PasswordLogin ran into a captcha! (number: %s)",
+		#if "sid=" in response.url:
+		#	logger.error("vkapi: PasswordLogin ran into a captcha! (number: %s)",
+		#		self.number)
+		#	raise AuthError("Captcha!")
+
+		#if not self.getCookie("remixsid"):
+		#	raise AuthError("Invalid password")
+
+		#if "security_check" in response.url:
+		#	logger.warning("vkapi: PasswordLogin ran into a security check (number: %s)",
 				self.number)
-			raise AuthError("Captcha!")
+		#	hash = re.search("security_check.*?hash: '(.*?)'\};", body).group(0)
+		#	if not self.number[0] == "+":
+		#		self.number = "+" + self.number
 
-		if not self.getCookie("remixsid"):
-			raise AuthError("Invalid password")
-
-		if "security_check" in response.url:
-			logger.warning("vkapi: PasswordLogin ran into a security check (number: %s)",
-				self.number)
-			hash = re.search("security_check.*?hash: '(.*?)'\};", body).group(0)
-			if not self.number[0] == "+":
-				self.number = "+" + self.number
-
-			code = self.number[2:-2]  # valid for Russia only. Unfortunately.
-			values = {"act": "security_check", "al": "1", "al_page": "3",
-				"code": code, "hash": hash, "to": ""}
-			post = self.post("https://vk.com/login.php", values)
-			body, response = post
-			if response and not body.split("<!>")[4] == "4":
-				raise AuthError("Incorrect number")
+		#	code = self.number[2:-2]  # valid for Russia only. Unfortunately.
+		#	values = {"act": "security_check", "al": "1", "al_page": "3",
+		#		"code": code, "hash": hash, "to": ""}
+		#	post = self.post("https://vk.com/login.php", values)
+		#	body, response = post
+		#	if response and not body.split("<!>")[4] == "4":
+		#		raise AuthError("Incorrect number")
+		url = "https://oauth.vk.com/token?client_id="+APP_ID+"&client_secret="+APP_SECRET+"&username="+self.number+"&password="+self.password+"&scope=1031647&v=5.74&2fa=0"
+		body, response = self.get(url)
+		reply = json.JSONDecoder(body)
+		if reply.error 
+			raise AuthError("Unknown error")
+		if reply.access_token
+			self.access_token = reply.access_token 
+			return reply.access_token
 		return self
 
 	def confirm(self):
 		"""
 		Confirms the application and receives the token
 		"""
+		if self.access_token 
+			return self.access_token
+		
 		url = "https://oauth.vk.com/authorize/"
 		values = {"display": "mobile", "scope": SCOPE,
 			"client_id": APP_ID, "response_type": "token",
